@@ -29,13 +29,17 @@ std::string to_string1(int num)
 }
 int main()
 {
-    Solution s;                                       // test
-    vector<int> iter1 = s.twoSum({2, 7, 11, 15}, 13); // test
+    // Solution s;                                       // test
+    // vector<int> iter1 = s.twoSum({2, 7, 11, 15}, 13); // test
 
-    for (auto &iter : iter1)
-    {
-        cout << iter << " " << endl;
-    }
-    cout << to_string1(iter1[0]) << endl;
+    // for (auto &iter : iter1)
+    // {
+    //     cout << iter << " " << endl;
+    // }
+    // cout << to_string1(iter1[0]) << endl;
+
+    const unsigned char MESSAGE_SIZE = 7;
+    char buf[MESSAGE_SIZE];
+    cout << sizeof(buf)<< endl;
     return 0;
 }
