@@ -7,10 +7,12 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
+                "session.cpp", // 添加 session.cpp 文件
                 "${file}",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
-                "-lws2_32" // 链接 Windows 套接字库
+                "-lws2_32", // 链接 Windows 套接字库
+                "-lmswsock"
             ],
             "options": {
                 "cwd": "${fileDirname}"
@@ -35,7 +37,7 @@
                 "$go"
             ],
             "group": "build",
-            "detail": "cd c:\\Users\\Administrator\\Desktop\\vscode-demo; go build ${fileDirname}"
+            "detail": "cd c:\\Users\\Administrator\\Desktop\\vscode-demo\\; go build ${fileDirname}"
         }
     ],
     "version": "2.0.0"
