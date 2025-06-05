@@ -31,13 +31,35 @@ std::string Session::GetUuid()
     return uuid_;
 }
 
+void Session::Send(char *msg, int max_length)
+{
+    // true 表示发送队列有数据,false表示发送队列没有数据
+    // 表示此处发送之前
+    bool pending = false;
+    std::lock_guard<std::mutex> lock(send_lock_);
+    if (send_que_.size() > 0)
+    {
+        pending = true;
+    }
+    send_que_.push(make_shared<MsgNode>(msg, max_length));
+    if (pending)
+    {
+        return;
+    }
+    boost::asio::async_write(socket_, boost::asio::buffer(msg, max_length),
+                             std::bind(&Session::handle_write, this, std::placeholders::_1, shared_from_this()));
+}
 void Session::handle_read(const boost::system::error_code &error, std::size_t bytes_transferred, shared_ptr<Session> self)
 {
     if (!error)
     {
         cout << "server receive data is " << data_ << endl;
-        boost::asio::async_write(socket_, boost::asio::buffer(data_, bytes_transferred),
-                                 std::bind(&Session::handle_write, this, placeholders::_1, self));
+        Send(data_, bytes_transferred);
+        memset(data_, 0, max_length);
+        // 异步读取数据，当数据读取完成后，会调用 handle_read 回调函数。
+        // 回调函数中，我们再次调用 async_read_some 函数，继续读取数据，
+        boost::asio::async_read(socket_, boost::asio::buffer(data_, max_length),
+                                std::bind(&Session::handle_read, this, placeholders::_1, placeholders::_2, self));
     }
     else
     {
@@ -51,47 +73,20 @@ void Session::handle_write(const boost::system::error_code &error, shared_ptr<Se
 {
     if (!error)
     {
-        memset(data_, 0, max_length);
-        socket_.async_read_some(boost::asio::buffer(data_, max_length), std::bind(&Session::handle_read, this, placeholders::_1, placeholders::_2, self));
+        std::lock_guard<std::mutex> lock(send_lock_);
+        // 写完之后的回调函数
+        send_que_.pop();
+        if (send_que_.size() > 0)
+        {
+            // 继续发送
+            shared_ptr<MsgNode> msg = send_que_.front();
+            boost::asio::async_write(socket_, boost::asio::buffer(msg->data_, msg->max_len_),
+                                     std::bind(&Session::handle_write, this, placeholders::_1, self));
+        }
     }
     else
     {
         std::cout << "write error" << std::endl;
         server_->ClearSession(uuid_);
     }
-}
-
-Server::Server(boost::asio::io_context &ioc, short port)
-    : ioc_(ioc),
-      acceptor_(ioc, tcp::endpoint(tcp::v4(), port))
-{
-    cout << "Server started on port " << port << endl;
-    start_accept(); // Start accepting connections
-}
-
-void Server::ClearSession(std::string uuid)
-{
-    session_.erase(uuid);
-}
-
-void Server::start_accept()
-{
-    shared_ptr<Session> new_session = make_shared<Session>(ioc_, this);
-    acceptor_.async_accept(new_session->Socket(),
-                           std::bind(&Server::handle_accept, this, new_session, placeholders::_1));
-}
-
-void Server::handle_accept(shared_ptr<Session> new_session, const boost::system::error_code &error)
-{
-    if (!error)
-    {
-        cout << "new session accepted" << endl;
-        new_session->Start();
-        session_[new_session->GetUuid()] = new_session;
-    }
-    else
-    {
-        cout << "accept error: " << error.message() << endl;
-    }
-    start_accept();
 }

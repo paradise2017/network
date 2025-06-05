@@ -8,6 +8,7 @@
                 "-fdiagnostics-color=always",
                 "-g",
                 "session.cpp", // 添加 session.cpp 文件
+                "server.cpp", // 添加 session.cpp 文件
                 "${file}",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
@@ -36,8 +37,7 @@
             "problemMatcher": [
                 "$go"
             ],
-            "group": "build",
-            "detail": "cd c:\\Users\\Administrator\\Desktop\\vscode-demo\\; go build ${fileDirname}"
+            "group": "build"
         }
     ],
     "version": "2.0.0"

@@ -112,6 +112,7 @@
         "unordered_set": "cpp",
         "valarray": "cpp",
         "variant": "cpp",
-        "resumable": "cpp"
+        "resumable": "cpp",
+        "string_view": "cpp"
     }
 }
