@@ -7,6 +7,8 @@
 #include <mutex>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#define MAX_LENGTH 1024 * 2
+#define HEAD_LENGTH 2
 using boost::asio::ip::tcp;
 using namespace std;
 class Server;
@@ -37,17 +39,42 @@ private:
     std::string uuid_;
     std::queue<shared_ptr<MsgNode>> send_que_;
     std::mutex send_lock_;
+    // 收到的消息结构
+    std::shared_ptr<MsgNode> recv_msg_node_;
+    bool b_head_parse_;
+    // 收到的头部结构
+    std::shared_ptr<MsgNode> recv_head_node_;
 };
 
+// tlv 协议
+// 消息头（存储） 消息体
+// example
+// 5 "hello"
 class MsgNode
 {
     friend class Session;
     // 友元类访问私有成员
 public:
-    MsgNode(char *msg, int max_len)
+    MsgNode(char *msg, short max_len) : total_len_(max_len + HEAD_LENGTH), cur_len_(0)
     {
-        data_ = new char[max_len];
-        memcpy(data_, msg, max_len);
+        // 为什么 + 1 存储\0
+        data_ = new char[total_len_ + 1]();
+        // 存储消息体的长度
+        memcpy(data_, &max_len, HEAD_LENGTH);
+        // 数据+2 存储长度
+        memcpy(data_ + HEAD_LENGTH, msg, max_len);
+        data_[total_len_] = '\0';
+    }
+
+    MsgNode(short max_len) : total_len_(max_len), cur_len_(0)
+    {
+        data_ = new char[total_len_ + 1]();
+    }
+
+    void Clear()
+    {
+        memset(data_, 0, total_len_);
+        cur_len_ = 0;
     }
     ~MsgNode()
     {
@@ -55,7 +82,7 @@ public:
     }
 
 private:
-    int cur_len_;
-    int max_len_;
+    short cur_len_;
+    short total_len_;
     char *data_;
 };
