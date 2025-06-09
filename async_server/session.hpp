@@ -26,6 +26,7 @@ public:
 private:
     void handle_read(const boost::system::error_code &error, std::size_t bytes_transferred, shared_ptr<Session> self);
     void handle_write(const boost::system::error_code &error, shared_ptr<Session> self);
+    void Close();
 
 private:
     // 与客户端收发的socket

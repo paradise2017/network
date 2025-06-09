@@ -180,7 +180,7 @@ void Session::handle_write(const boost::system::error_code &error, shared_ptr<Se
         {
             // 继续发送
             shared_ptr<MsgNode> msg = send_que_.front();
-            boost::asio::async_write(socket_, boost::asio::buffer(msg->data_, msg->max_len_),
+            boost::asio::async_write(socket_, boost::asio::buffer(msg->data_, msg->total_len_),
                                      std::bind(&Session::handle_write, this, placeholders::_1, self));
         }
     }
@@ -189,4 +189,9 @@ void Session::handle_write(const boost::system::error_code &error, shared_ptr<Se
         std::cout << "write error" << std::endl;
         server_->ClearSession(uuid_);
     }
+}
+
+void Session::Close()
+{
+    socket_.close();
 }

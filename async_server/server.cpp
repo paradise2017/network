@@ -20,6 +20,7 @@ void Server::start_accept()
     // Socket 类似于epoll中的传递消息的fd
     // 当有新的连接到来时，acceptor_分配socket收发数据
     // 底层等待客户端发送数据
+    // 异步接收事件写到 io_context 事件队列
     acceptor_.async_accept(new_session->Socket(),
                            std::bind(&Server::handle_accept, this, new_session, placeholders::_1));
 }
